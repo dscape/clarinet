@@ -33,7 +33,7 @@ the reason behind this work was to create better full text support in node. crea
 
 ## browser
 
-1. minimize clarinet.js
+1. [minimize] clarinet.js
 2. load it into your webpage
 
 # usage
@@ -206,6 +206,7 @@ in `test/clarinet.js` there's two lines you might want to change. `#8` where you
 `(oO)--',-` in [caos]
 
 [npm]: http://npmjs.org
+[minimize]: http://gpbmike.github.io/refresh-sf
 [issues]: http://github.com/dscape/clarinet/issues
 [caos]: http://caos.di.uminho.pt/
 [saxjs]: http://github.com/isaacs/sax-js
