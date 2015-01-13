@@ -10,7 +10,7 @@ function assert(expr, msg) {
   }
 }
 
-var seps   = [undefined, /\t|\n|\r/, '']
+var seps   = [undefined] //, /\t|\n|\r/, '']
   , sep
   , docs   =
     { empty_array :
@@ -739,6 +739,42 @@ var seps   = [undefined, /\t|\n|\r/, '']
           ['value', 'LÃ©\'Oral'],
           ['value', 'Ã©alL\'Or'],
           ['closearray', undefined]
+        ]
+      }
+    , single_name :
+      { text      : '{"x"}'
+      , events    :
+        [ ['error'  , undefined]
+        ]
+      }
+    , single_name_with_colon :
+      { text      : '{"x":}'
+      , events    :
+        [ ['openobject'  , "x"]
+        , ['error'       , undefined]
+        ]
+      }
+    , single_name_with_comma:
+      { text      : '{"x",}'
+      , events    :
+        [ ['error'  , undefined]
+        ]
+      }
+    , second_name_only :
+      { text      : '{"x":3,"y"}'
+      , events    :
+        [ ['openobject'  , "x"]
+        , ['value'       , 3]
+        , ['error'       , undefined]
+        ]
+      }
+    , second_name_with_colon:
+      { text      : '{"x":3,"y":}'
+      , events    :
+        [ ['openobject'  , "x"]
+        , ['value'       , 3]
+        , ['key'         , "y"]
+        , ['error'       , undefined]
         ]
       }
     };
