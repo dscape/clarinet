@@ -124,6 +124,10 @@ else env = window;
     if (!(this instanceof CParser)) return new CParser (opt);
 
     var parser = this;
+
+    // allow the caller know that this version supports 'strict' feature
+    parser.strictfeature = true;
+
     clearBuffers(parser);
     parser.bufferCheckPosition = clarinet.MAX_BUFFER_LENGTH;
     parser.q        = parser.c = parser.p = "";
@@ -293,7 +297,7 @@ else env = window;
 
   function closeValue(parser, event) {
     // since parser is closed, we bypass annoying onvalue output
-    if (parser.closed) return;
+    if (parser.closed && parser.opt.strict) return;
 
     parser.textNode = textopts(parser.opt, parser.textNode);
     if (parser.textNode) {
@@ -326,16 +330,19 @@ else env = window;
   }
 
   function end(parser) {
-    // in order to ultimately bypass annoying 'onvalue' output or as such
-    // flagging 'closed' first
-    parser.closed = true;
-    if( parser.depth !== 0 ||
-        parser.state !== S.BEGIN) {
-      // we only check if it's zero-depth or at BEGIN state
-      // attention: '{}[]' would be parsed successfully as two consecutive json objects
+    if (parser.opt.strict) {
+      // in order to ultimately bypass annoying 'onvalue' output or as such
+      // flagging 'closed' first
+      parser.closed = true;
+      if( parser.depth !== 0 ||
+          parser.state !== S.BEGIN) {
+        // we only check if it's zero-depth or at BEGIN state
+        // attention: '{}[]' would be parsed successfully as two consecutive json objects
+        error(parser, "Unexpected end");
+      }
+    } else if (parser.state !== S.VALUE || parser.depth !== 0) {
       error(parser, "Unexpected end");
     }
-     
     closeValue(parser);
     parser.c      = "";
     parser.closed = true;
@@ -375,8 +382,10 @@ else env = window;
         case S.BEGIN:
           if (c === "{") parser.state = S.OPEN_OBJECT;
           else if (c === "[") {
-            // in this way, '[' would be correctly reported 'onopenarray' before 'error' is emit
-            emit(parser, 'onopenarray');
+            if (parser.opt.strict) {
+              // in this way, '[' would be correctly reported 'onopenarray' before 'error' is emit
+              emit(parser, 'onopenarray');
+            }
             parser.state = S.OPEN_ARRAY;
           } else if (c !== '\r' && c !== '\n' && c !== ' ' && c !== '\t')
             error(parser, "Non-whitespace before {[.");
@@ -389,13 +398,20 @@ else env = window;
           else {
             if(c === '}') {
               emit(parser, 'onopenobject');
+              this.depth++;
               emit(parser, 'oncloseobject');
-              // if depth was 0, we don't pop, just reset state to S.BEGIN
-              // side-effect: '{}[]' would be parsed successfully as two consecutive json objects
-              if (this.depth===0) parser.state = S.BEGIN;
-              else                parser.state = parser.stack.pop();
+              this.depth--;
+              if (parser.opt.strict) {
+                // if depth was 0, we don't pop, just reset state to S.BEGIN
+                // side-effect: '{}[]' would be parsed successfully as two consecutive json objects
+                if (this.depth===0) parser.state = S.BEGIN;
+                else                parser.state = parser.stack.pop();
+              } else parser.state = parser.stack.pop() || S.VALUE;
               continue;
-            } else  parser.stack.push(S.CLOSE_FIRST_KEY); // stating where we were
+            } else {
+              if (parser.opt.strict) parser.stack.push(S.CLOSE_FIRST_KEY); // stating where we were
+              else                   parser.stack.push(S.CLOSE_OBJECT);
+            }
           }
           if(c === '"') parser.state = S.STRING;
           else error(parser, "Malformed object key should start with \"");
@@ -406,35 +422,50 @@ else env = window;
         case S.CLOSE_OBJECT:
           if (c === '\r' || c === '\n' || c === ' ' || c === '\t') continue;
           if(c===':') {
-            if(parser.state === S.CLOSE_OBJECT) {
-              error(parser, "Unexpected '" + c + "' found");
-              continue;
-            }
-            if(parser.state === S.CLOSE_FIRST_KEY) {
-              // since we have not inc depth yet
-              this.depth++;
-            }
-            // before flagging S.VALUE,
-            // we shall push a state in order we would later know where we were
-            parser.stack.push(S.CLOSE_OBJECT);
-
+            if(parser.opt.strict) {
+              if(parser.state === S.CLOSE_OBJECT) {
+                error(parser, "Unexpected '" + c + "' found");
+                continue;
+              }
+              if(parser.state === S.CLOSE_FIRST_KEY) {
+                // since we have not inc depth yet
+                this.depth++;
+              }
+              // before flagging S.VALUE,
+              // we shall push a state in order we would later know where we were
+              parser.stack.push(S.CLOSE_OBJECT);
+            } else if(parser.state === S.CLOSE_OBJECT) {
+              parser.stack.push(S.CLOSE_OBJECT);
+              closeValue(parser, 'onopenobject');
+               this.depth++;
+            } else closeValue(parser, 'onkey');
             parser.state  = S.VALUE;
-            continue;
           } else if (c==='}') {
-            if(parser.state === S.CLOSE_OBJECT) {
-              emit(parser, 'oncloseobject');
+            if(parser.opt.strict) {
+             if(parser.state === S.CLOSE_OBJECT) {
+                emit(parser, 'oncloseobject');
+                this.depth--;
+                parser.state = parser.stack.pop();
+                // the same reason as stated in case S.OPEN_OBJECT
+                if (this.depth===0) parser.state = S.BEGIN;
+              } else error(parser, "Expecting ':' but '" + c + "' found");
+            } else {
+              emitNode(parser, 'oncloseobject');
               this.depth--;
-              parser.state = parser.stack.pop();
-              // the same reason as stated in case S.OPEN_OBJECT
-              if (this.depth===0) parser.state = S.BEGIN;
-            } else error(parser, "Expecting ':' but '" + c + "' found");
-            continue;
+              parser.state = parser.stack.pop() || S.VALUE;
+            }
           } else if(c===',') {
-            if(parser.state === S.CLOSE_OBJECT) {
-              // attention: no more depth to inc
+            if(parser.opt.strict) {
+              if(parser.state === S.CLOSE_OBJECT) {
+                // attention: no more depth to inc
+                parser.state  = S.OPEN_KEY;
+              } else error(parser, "Expecting ':' buf '" + c + "' found");
+            } else {
+              if(parser.state === S.CLOSE_OBJECT)
+                parser.stack.push(S.CLOSE_OBJECT);
+              closeValue(parser);
               parser.state  = S.OPEN_KEY;
-            } else error(parser, "Expecting ':' buf '" + c + "' found");
-            continue;
+            }
           } else if(parser.state === S.CLOSE_OBJECT) {
             error(parser, "Expecting '}' but '" + c + "' found");
           } else error(parser, 'Bad object');
@@ -442,25 +473,39 @@ else env = window;
 
         case S.OPEN_ARRAY: // after an array there always a value
           if (c === '\r' || c === '\n' || c === ' ' || c === '\t') continue;
-          if (c === ']') {
+          if (!parser.opt.strict) {
+            emit(parser, 'onopenarray');
+            this.depth++;
+            parser.state = S.VALUE;
+            if(c === ']') {
+              emit(parser, 'onclosearray');
+              this.depth--;
+              parser.state = parser.stack.pop() || S.VALUE;
+              continue;
+            } else {
+              parser.stack.push(S.CLOSE_ARRAY);
+            }
+          } else if (c === ']') {
             emit(parser, 'onclosearray');
             // the same reason as stated in case S.OPEN_OBJECT
             if (this.depth===0) parser.state = S.BEGIN;
             else                parser.state = parser.stack.pop();
             continue;
+          } else {
+            this.depth++;
+            parser.stack.push(S.CLOSE_ARRAY); // the same reason as stated in case S.OPEN_OBJECT
+            parser.state = S.VALUE;
           }
-
-          this.depth++;
-          parser.stack.push(S.CLOSE_ARRAY); // the same reason as stated in case S.OPEN_OBJECT
-          parser.state = S.VALUE;
           // fall through
         case S.VALUE:
           if (c === '\r' || c === '\n' || c === ' ' || c === '\t') continue;
                if(c === '"') parser.state = S.STRING;
           else if(c === '{') parser.state = S.OPEN_OBJECT;
           else if(c === '[') {
-            // in this way, '[' would be correctly reported 'onopenarray' before 'error' is emit
-            emit(parser, 'onopenarray');
+            if(parser.opt.strict) {
+              // in this way, '[' would be correctly reported 'onopenarray' before 'error' is emit
+              emit(parser, 'onopenarray');
+            }
             parser.state = S.OPEN_ARRAY;
           } else if(c === 't') parser.state = S.TRUE;
           else if(c === 'f') parser.state = S.FALSE;
@@ -479,12 +524,21 @@ else env = window;
         case S.CLOSE_ARRAY:
           if(c===',') {
             parser.stack.push(S.CLOSE_ARRAY);
+            if(!parser.opt.strict) {
+              closeValue(parser, 'onvalue');
+            }
             parser.state  = S.VALUE;
           } else if (c===']') {
-            emit(parser, 'onclosearray');
-            this.depth--;             
-            if (this.depth===0) parser.state = S.BEGIN;
-            else                parser.state = parser.stack.pop();
+            if(parser.opt.strict) {
+              emit(parser, 'onclosearray');
+              this.depth--;
+              if (this.depth===0) parser.state = S.BEGIN;
+              else                parser.state = parser.stack.pop();
+            } else {
+              emitNode(parser, 'onclosearray');
+              this.depth--;
+              parser.state = parser.stack.pop() || S.VALUE;
+            }
           } else if (c === '\r' || c === '\n' || c === ' ' || c === '\t')
               continue;
           else error(parser, 'Bad array');
@@ -516,6 +570,14 @@ else env = window;
               if (!c) break STRING_BIGLOOP;
             }
             if (c === '"' && !slashed) {
+              if (!parser.opt.strict) {
+                parser.state = parser.stack.pop() || S.VALUE;
+                parser.textNode += chunk.substring(starti, i-1);
+                if(!parser.textNode) {
+                  emit(parser, "onvalue", "");
+                }
+                break;
+              }
               // where were we?
               parser.state = parser.stack.pop();
               // all for the sake of bypassing annoying 'onvalue' output in case when error occured
@@ -530,8 +592,6 @@ else env = window;
                 emit(parser, 'onkey', textNode);
                 break;
               case S.CLOSE_OBJECT:
-                emit(parser, 'onvalue', textNode);
-                break;
               case S.CLOSE_ARRAY:
                 emit(parser, 'onvalue', textNode);
                 break;
@@ -603,6 +663,7 @@ else env = window;
           if(c==='e') {
             emit(parser, "onvalue", true);
             parser.state = parser.stack.pop();
+            if (!parser.opt.strict) parser.state |= S.VALUE;
           } else error(parser, 'Invalid true started with tru'+ c);
         continue;
 
@@ -629,6 +690,7 @@ else env = window;
           if (c==='e') {
             emit(parser, "onvalue", false);
             parser.state = parser.stack.pop();
+            if (!parser.opt.strict) parser.state |= S.VALUE;
           } else error(parser, 'Invalid false started with fals'+ c);
         continue;
 
@@ -649,6 +711,7 @@ else env = window;
           if(c==='l') {
             emit(parser, "onvalue", null);
             parser.state = parser.stack.pop();
+            if (!parser.opt.strict) parser.state |= S.VALUE;
           } else error(parser, 'Invalid null started with nul'+ c);
         continue;
 
@@ -678,6 +741,7 @@ else env = window;
             closeNumber(parser);
             i--; // go back one
             parser.state = parser.stack.pop();
+            if (!parser.opt.strict) parser.state |= S.VALUE;
           }
         continue;
 

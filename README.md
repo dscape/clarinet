@@ -106,6 +106,9 @@ settings supported:
 * `trim` - boolean. whether or not to trim text and comment nodes.
 * `normalize` - boolean. if true, then turn any whitespace into a single
   space.
+* `strict` - boolean. whether or not to parse in a strict mode, for instance,
+  an object name is NOT followed by a ':' will result in 'error'.
+
 
 ## methods
 

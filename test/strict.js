@@ -11,152 +11,54 @@ function assert(expr, msg) {
 }
 
 var docs =
-    { allowable_as_side_effect :
-      { text      : '[]{}'
-      , events    :
-        [ ['openarray'  , undefined]
-        , ['closearray' , undefined]
-        , ['openobject' , undefined]
-        , ['closeobject', undefined]
-        , ['end'        , undefined]
-        , ['ready'      , undefined]
-        ]
-      }
-    , broken_array_0 :
-      { text      : '["x","y","z"]'
+    { broken_array_1 :
+      { text      : '["x","y'
       , events    :
         [ ['openarray'  , undefined]
         , ["value"      , "x"]
-        , ["value"      , "y"]
-        , ["value"      , "z"]
-        , ['closearray' , undefined]
-        , ['end'        , undefined]
-        , ['ready'      , undefined]
-        ]
-      }
-    , broken_array_1 :
-      { text      : '["x","y","'
-      , events    :
-        [ ['openarray'  , undefined]
-        , ["value"      , "x"]
-        , ["value"      , "y"]
         , ["error"      , undefined]
         , ['end'        , undefined]
         , ['ready'      , undefined]
         ]
       }
     , broken_array_2 :
-      { text      : '["x","y",'
+      { text      : '["x'
       , events    :
         [ ['openarray'  , undefined]
-        , ["value"      , "x"]
-        , ["value"      , "y"]
         , ["error"      , undefined]
         , ['end'        , undefined]
         , ['ready'      , undefined]
         ]
       }
     , broken_array_3 :
-      { text      : '["x","y"'
+      { text      : ''
       , events    :
-        [ ['openarray'  , undefined]
-        , ["value"      , "x"]
-        , ["value"      , "y"]
-        , ["error"      , undefined]
-        , ['end'        , undefined]
+        [ ['end'        , undefined]
         , ['ready'      , undefined]
-        ]
-      }
-    , broken_array_4 :
-      { text      : '["x",'
-      , events    :
-        [ ['openarray'  , undefined]
-        , ["value"      , "x"]
-        , ["error"      , undefined]
-        , ['end'        , undefined]
-        , ['ready'      , undefined]
-        ]
-      }
-    , broken_array_5 :
-      { text      : '["x"'
-      , events    :
-        [ ['openarray'  , undefined]
-        , ["value"      , "x"]
-        , ["error"      , undefined]
-        , ['end'        , undefined]
-        , ['ready'      , undefined]
-        ]
-      }
-    , broken_array_6 :
-      { text      : '["'
-      , events    :
-        [ ['openarray'  , undefined]
-        , ["error"      , undefined]
-        , ['end'        , undefined]
-        , ['ready'      , undefined]
-        ]
-      }
-    , broken_object_1   :
-      { text   : '{"a":{"b":"c"}'
-      , events :
-        [ ["openobject"  , "a"]
-        , ["openobject"  , "b"]
-        , ["value"       , "c"]
-        , ["closeobject" , undefined]
-        , ["error"       , undefined]
-        ]
-      }
-    , broken_object_2   :
-      { text   : '{"a":{"b":"c"'
-      , events :
-        [ ["openobject"  , "a"]
-        , ["openobject"  , "b"]
-        , ["value"       , "c"]
-        , ["error"       , undefined]
-        , ['end'         , undefined]
-        , ['ready'       , undefined]
-        ]
-      }
-    , broken_object_2   :
-      { text   : '{"a":{"b":"'
-      , events :
-        [ ["openobject"  , "a"]
-        , ["openobject"  , "b"]
-        , ["error"       , undefined]
-        , ['end'         , undefined]
-        , ['ready'       , undefined]
-        ]
-      }
-    , broken_object_3   :
-      { text   : '{"a":{"b":'
-      , events :
-        [ ["openobject"  , "a"]
-        , ["openobject"  , "b"]
-        , ["error"       , undefined]
-        , ['end'         , undefined]
-        , ['ready'       , undefined]
         ]
       }
     , broken_object_4   :
-      { text   : '{"a":{"'
+      { text   : '{"a":{"b":"c'
       , events :
         [ ["openobject"  , "a"]
+        , ["openobject"  , "b"]
         , ["error"       , undefined]
         , ['end'         , undefined]
         , ['ready'       , undefined]
         ]
       }
     , broken_object_5   :
-      { text   : '{"a":{'
+      { text   : '{"a":{"b"'
       , events :
         [ ["openobject"  , "a"]
+        , ["openobject"  , "b"]
         , ["error"       , undefined]
         , ['end'         , undefined]
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_6  :
-      { text   : '{"a":'
+    , broken_object_6   :
+      { text   : '{"a":{"b'
       , events :
         [ ["openobject"  , "a"]
         , ["error"       , undefined]
@@ -165,15 +67,16 @@ var docs =
         ]
       }
     , broken_object_7  :
-      { text   : '{"'
+      { text   : '{"a"'
       , events :
-        [ ["error"       , undefined]
+        [ ["openobject"  , "a"]
+        , ["error"       , undefined]
         , ['end'         , undefined]
         , ['ready'       , undefined]
         ]
       }
     , broken_object_8  :
-      { text   : '{'
+      { text   : '{"a'
       , events :
         [ ["error"       , undefined]
         , ['end'         , undefined]
@@ -198,6 +101,10 @@ function generic(key, prechunked, sep) {
       , env = process && process.env ? process.env : window
       , record     = []
       ;
+
+
+      // explicitly set 'strict' mode for the parser
+      parser.opt.strict = true;
 
 
     _.each(events, function(event_pair) { 
@@ -227,7 +134,13 @@ function generic(key, prechunked, sep) {
   };
 }
 
-describe('further', function(){
+describe('strict', function(){
+  // Attention:test cases here are for strict-mode only
+  if(clarinet.parser()["strictfeature"]===undefined) {
+    // The running 'clarinet.js' does NOT support strict-feature
+    // bypass this test case
+    return;
+  }
   describe('#generic', function() {
     for (var key in docs) {
       if (docs.hasOwnProperty(key)) {
