@@ -11,7 +11,7 @@ function assert(expr, msg) {
 }
 
 var docs =
-    { broken_array_1 :
+    { brokenArray1 :
       { text      : '["x","y'
       , events    :
         [ ['openarray'  , undefined]
@@ -21,7 +21,7 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_array_2 :
+    , brokenArray2 :
       { text      : '["x'
       , events    :
         [ ['openarray'  , undefined]
@@ -30,14 +30,14 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_array_3 :
+    , brokenArray3 :
       { text      : ''
       , events    :
         [ ['end'        , undefined]
         , ['ready'      , undefined]
         ]
       }
-    , broken_object_4   :
+    , brokenObject4   :
       { text   : '{"a":{"b":"c'
       , events :
         [ ["openobject"  , "a"]
@@ -47,7 +47,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_5   :
+    , brokenObject5   :
       { text   : '{"a":{"b"'
       , events :
         [ ["openobject"  , "a"]
@@ -57,7 +57,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_6   :
+    , brokenObject6   :
       { text   : '{"a":{"b'
       , events :
         [ ["openobject"  , "a"]
@@ -66,7 +66,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_7  :
+    , brokenObject7  :
       { text   : '{"a"'
       , events :
         [ ["openobject"  , "a"]
@@ -75,7 +75,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_8  :
+    , brokenObject8  :
       { text   : '{"a'
       , events :
         [ ["error"       , undefined]

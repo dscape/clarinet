@@ -11,7 +11,7 @@ function assert(expr, msg) {
 }
 
 var docs =
-    { allowable_as_side_effect :
+    { allowableAsSideEffect :
       { text      : '[]{}'
       , events    :
         [ ['openarray'  , undefined]
@@ -22,7 +22,7 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_array_0 :
+    , brokenArray0 :
       { text      : '["x","y","z"]'
       , events    :
         [ ['openarray'  , undefined]
@@ -34,7 +34,7 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_array_1 :
+    , brokenArray1 :
       { text      : '["x","y","'
       , events    :
         [ ['openarray'  , undefined]
@@ -45,7 +45,7 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_array_2 :
+    , brokenArray2 :
       { text      : '["x","y",'
       , events    :
         [ ['openarray'  , undefined]
@@ -56,7 +56,7 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_array_3 :
+    , brokenArray3 :
       { text      : '["x","y"'
       , events    :
         [ ['openarray'  , undefined]
@@ -67,7 +67,7 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_array_4 :
+    , brokenArray4 :
       { text      : '["x",'
       , events    :
         [ ['openarray'  , undefined]
@@ -77,7 +77,7 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_array_5 :
+    , brokenArray5 :
       { text      : '["x"'
       , events    :
         [ ['openarray'  , undefined]
@@ -87,7 +87,7 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_array_6 :
+    , brokenArray6 :
       { text      : '["'
       , events    :
         [ ['openarray'  , undefined]
@@ -96,7 +96,7 @@ var docs =
         , ['ready'      , undefined]
         ]
       }
-    , broken_object_1   :
+    , brokenObject1   :
       { text   : '{"a":{"b":"c"}'
       , events :
         [ ["openobject"  , "a"]
@@ -106,7 +106,7 @@ var docs =
         , ["error"       , undefined]
         ]
       }
-    , broken_object_2   :
+    , brokenObject2   :
       { text   : '{"a":{"b":"c"'
       , events :
         [ ["openobject"  , "a"]
@@ -117,7 +117,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_2   :
+    , brokenObject2   :
       { text   : '{"a":{"b":"'
       , events :
         [ ["openobject"  , "a"]
@@ -127,7 +127,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_3   :
+    , brokenObject3   :
       { text   : '{"a":{"b":'
       , events :
         [ ["openobject"  , "a"]
@@ -137,7 +137,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_4   :
+    , brokenObject4   :
       { text   : '{"a":{"'
       , events :
         [ ["openobject"  , "a"]
@@ -146,7 +146,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_5   :
+    , brokenObject5   :
       { text   : '{"a":{'
       , events :
         [ ["openobject"  , "a"]
@@ -155,7 +155,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_6  :
+    , brokenObject6  :
       { text   : '{"a":'
       , events :
         [ ["openobject"  , "a"]
@@ -164,7 +164,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_7  :
+    , brokenObject7  :
       { text   : '{"'
       , events :
         [ ["error"       , undefined]
@@ -172,7 +172,7 @@ var docs =
         , ['ready'       , undefined]
         ]
       }
-    , broken_object_8  :
+    , brokenObject8  :
       { text   : '{'
       , events :
         [ ["error"       , undefined]
