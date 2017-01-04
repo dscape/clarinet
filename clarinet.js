@@ -333,6 +333,14 @@ else env = window;
     return parser;
   }
 
+  function charAt (chunk, i) {
+    var result = ''
+    if (i < chunk.length) {
+      result = chunk.charAt(i)
+    }
+    return result
+  }
+
   function write (chunk) {
     var parser = this;
     if (this.error) throw this.error;
@@ -343,7 +351,7 @@ else env = window;
     if (clarinet.DEBUG) console.log('write -> [' + chunk + ']');
     while (c) {
       p = c;
-      parser.c = c = chunk.charAt(i++);
+      parser.c = c = charAt(chunk, i++);
       // if chunk doesnt have next, like streaming char by char
       // this way we need to check if previous is really previous
       // if not we need to reset to what the parser says is the previous
@@ -469,7 +477,7 @@ else env = window;
             // zero means "no unicode active". 1-4 mean "parse some more". end after 4.
             while (unicodeI > 0) {
               parser.unicodeS += c;
-              c = chunk.charAt(i++);
+              c = charAt(chunk, i++);
               parser.position++;
               if (unicodeI === 4) {
                 // TODO this might be slow? well, probably not used too often anyway
@@ -495,7 +503,7 @@ else env = window;
               slashed = true;
               parser.textNode += chunk.substring(starti, i-1);
               parser.position += i - 1 - starti;
-              c = chunk.charAt(i++);
+              c = charAt(chunk, i++);
               parser.position++;
               if (!c) break;
             }
@@ -513,7 +521,7 @@ else env = window;
               } else {
                 parser.textNode += c;
               }
-              c = chunk.charAt(i++);
+              c = charAt(chunk, i++);
               parser.position++;
               starti = i-1;
               if (!c) break;
