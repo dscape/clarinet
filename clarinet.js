@@ -293,7 +293,12 @@ else env = window;
   function closeValue(parser, event) {
     parser.textNode = textopts(parser.opt, parser.textNode);
     if (parser.textNode) {
-      emit(parser, (event ? event : "onvalue"), parser.textNode);
+      if (!parser.noout)
+        emit(parser, (event ? event : "onvalue"), parser.textNode);
+    } else {
+      if (parser.expect_colon) {
+        emit(parser, parser.expect_colon, "");
+      }
     }
     parser.textNode = "";
   }
@@ -382,14 +387,36 @@ else env = window;
               continue;
             } else  parser.stack.push(S.CLOSE_OBJECT);
           }
-          if(c === '"') parser.state = S.STRING;
-          else error(parser, "Malformed object key should start with \"");
+          if(c === '"') {
+            // ':' is always to be expected following name (S.STRING)
+            if (parser.state === S.OPEN_OBJECT) {
+              parser.expect_colon = 'onopenobject';
+            } else {
+              parser.expect_colon = 'onkey';
+            }
+            parser.state = S.STRING;
+          } else error(parser, "Malformed object key should start with \"");
         continue;
 
         case S.CLOSE_KEY:
         case S.CLOSE_OBJECT:
           if (c === '\r' || c === '\n' || c === ' ' || c === '\t') continue;
           var event = (parser.state === S.CLOSE_KEY) ? 'key' : 'object';
+          if (parser.expect_colon) {
+            // need to make sure ':' is the first non-blank character
+            if (c!=':') {
+              // parser.noout: to surpass emit unnecessary 'onvalue' event in later 'closeValue' function
+              parser.noout = true;
+              error(parser, "Expecting ':' but '" + c + "' found");
+            } else {
+              closeValue(parser, parser.expect_colon);
+              if (parser.expect_colon==='onopenobject')
+                this.depth++;
+              parser.expect_colon = false;   // restore
+              parser.state = S.VALUE;
+            }
+            continue;
+          }
           if(c===':') {
             if(parser.state === S.CLOSE_OBJECT) {
               parser.stack.push(S.CLOSE_OBJECT);
@@ -483,11 +510,20 @@ else env = window;
               if (!c) break STRING_BIGLOOP;
             }
             if (c === '"' && !slashed) {
+              if (parser.expect_colon==='onopenobject') {
+                parser.textNode += chunk.substring(starti, i-1);
+                parser.state = S.CLOSE_KEY;
+                break;
+              } else if (parser.expect_colon==='onkey') {
+                parser.textNode += chunk.substring(starti, i-1);
+                parser.state = parser.stack.pop() || S.VALUE;
+                break;
+              }
               parser.state = parser.stack.pop() || S.VALUE;
               parser.textNode += chunk.substring(starti, i-1);
               parser.position += i - 1 - starti;
               if(!parser.textNode) {
-                 emit(parser, "onvalue", "");
+                emit(parser, "onvalue", "");
               }
               break;
             }
