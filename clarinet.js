@@ -423,7 +423,7 @@
             if(c === Char.closeBrace) {
               emit(parser, 'onopenobject');
               this.depth++;
-              emit(parser, 'oncloseobject');
+              emit(parser, 'oncloseobject', i);
               this.depth--;
               parser.state = parser.stack.pop() || S.VALUE;
               continue;
@@ -445,7 +445,7 @@
             } else closeValue(parser, 'onkey');
             parser.state  = S.VALUE;
           } else if (c === Char.closeBrace) {
-            emitNode(parser, 'oncloseobject');
+            emitNode(parser, 'oncloseobject', i);
             this.depth--;
             parser.state = parser.stack.pop() || S.VALUE;
           } else if(c === Char.comma) {
@@ -460,11 +460,11 @@
         case S.VALUE:
           if (isWhitespace(c)) continue;
           if(parser.state===S.OPEN_ARRAY) {
-            emit(parser, 'onopenarray');
+            emit(parser, 'onopenarray', i);
             this.depth++;
             parser.state = S.VALUE;
             if(c === Char.closeBracket) {
-              emit(parser, 'onclosearray');
+              emit(parser, 'onclosearray', i);
               this.depth--;
               parser.state = parser.stack.pop() || S.VALUE;
               continue;
@@ -492,7 +492,7 @@
             closeValue(parser, 'onvalue');
             parser.state  = S.VALUE;
           } else if (c === Char.closeBracket) {
-            emitNode(parser, 'onclosearray');
+            emitNode(parser, 'onclosearray', i);
             this.depth--;
             parser.state = parser.stack.pop() || S.VALUE;
           } else if (isWhitespace(c))
