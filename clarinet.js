@@ -15,6 +15,7 @@
   clarinet.INFO              = (env.CDEBUG==='debug' || env.CDEBUG==='info');
   clarinet.EVENTS            =
     [ "value"
+    , "valuechunk"
     , "string"
     , "key"
     , "openobject"
@@ -142,7 +143,10 @@
           break;
 
           default:
-            error(parser, "Max buffer length exceeded: "+ buffer);
+            // error(parser, "Max buffer length exceeded: "+ buffer);
+            // console.log(`emit("onvaluechunck",${parser.textNode.length})`);
+            emit(parser, "onvaluechunk", parser.textNode);
+            parser.textNode = undefined;
         }
       }
       maxActual = Math.max(maxActual, len);
